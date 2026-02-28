@@ -6,7 +6,11 @@
       "WebFetch(domain:arxiv.org)",
       "WebFetch(domain:www.nature.com)",
       "Bash(pkill:*)",
-      "WebFetch(domain:www.waze.com)"
+      "WebFetch(domain:www.waze.com)",
+      "WebFetch(domain:www.loc8nearme.com)",
+      "WebFetch(domain:www.latlong.net)",
+      "WebFetch(domain:www.restaurantji.com)",
+      "WebFetch(domain:maps.apple.com)"
     ]
   }
 }
