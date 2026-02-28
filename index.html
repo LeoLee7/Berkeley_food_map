@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Berkeley Weekend Eats</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    :root {
+      --cream: #f7f3ee;
+      --warm-white: #faf8f5;
+      --forest: #2c3e2d;
+      --forest-light: #3d5c3e;
+      --terra: #c0612b;
+      --terra-light: #e8794a;
+      --gold: #c9a84c;
+      --muted: #8a8278;
+      --border: #e0d9d0;
+      --card-bg: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--forest);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--forest);
+      color: var(--cream);
+      padding: 14px 28px;
+      display: flex;
+      align-items: baseline;
+      gap: 18px;
+      flex-shrink: 0;
+    }
+    header h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.75rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+    header h1 span { color: var(--gold); font-style: italic; }
+    header p {
+      font-size: 0.8rem;
+      color: #a8b8a9;
+      font-weight: 300;
+    }
+
+    /* ── Layout ── */
+    .layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 380px;
+      flex-shrink: 0;
+      background: var(--warm-white);
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar::-webkit-scrollbar { width: 5px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ── Itinerary ── */
+    .itinerary {
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-label {
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--terra);
+      margin-bottom: 14px;
+    }
+    .day-block { margin-bottom: 18px; }
+    .day-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--forest);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .day-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .meal-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px dashed var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+      border-radius: 4px;
+      padding: 7px 6px;
+    }
+    .meal-row:last-child { border-bottom: none; }
+    .meal-row:hover { background: #f0ede8; }
+    .meal-time {
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      width: 50px;
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+    .meal-info { flex: 1; }
+    .meal-name {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--forest);
+    }
+    .meal-tag {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .meal-star {
+      width: 20px;
+      height: 20px;
+      background: var(--terra);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.6rem;
+      color: white;
+      margin-top: 1px;
+    }
+
+    /* ── Restaurant List ── */
+    .rest-list {
+      padding: 18px 22px;
+    }
+    .rest-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 9px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      border: 1px solid transparent;
+    }
+    .rest-card:hover {
+      background: #f0ede8;
+      border-color: var(--border);
+    }
+    .rest-card.highlight {
+      background: #fff7f2;
+      border-color: #f0c5a8;
+    }
+    .rest-card.highlight .rest-name { color: var(--terra); }
+    .pin-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 500;
+      flex-shrink: 0;
+      margin-top: 1px;
+      color: white;
+    }
+    .pin-dot.japanese { background: #5b7fa6; }
+    .pin-dot.chinese  { background: #c04a2a; }
+    .pin-dot.thai     { background: #2d8c5e; }
+    .pin-dot.spanish  { background: #b8831a; }
+    .pin-dot.korean   { background: #8a4fa8; }
+    .pin-dot.other    { background: #6b8a7a; }
+    .pin-dot.seafood  { background: #2c7098; }
+    .pin-dot.brazilian{ background: #3a7a35; }
+    .pin-dot.dessert  { background: #b05080; }
+    .rest-info { flex: 1; }
+    .rest-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    .rest-meta {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .star-badge {
+      font-size: 0.65rem;
+      background: var(--terra);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-left: 5px;
+    }
+
+    /* ── Map ── */
+    #map {
+      flex: 1;
+      z-index: 0;
+    }
+
+    /* ── Leaflet custom popup ── */
+    .leaflet-popup-content-wrapper {
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      font-family: 'DM Sans', sans-serif;
+      border-top: 3px solid var(--terra);
+    }
+    .leaflet-popup-content { margin: 12px 14px; }
+    .popup-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--forest);
+    }
+    .popup-cuisine {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .popup-note {
+      font-size: 0.78rem;
+      color: var(--forest);
+      margin-top: 7px;
+      line-height: 1.5;
+    }
+    .popup-highlight {
+      display: inline-block;
+      margin-top: 7px;
+      font-size: 0.7rem;
+      background: #fff2eb;
+      color: var(--terra);
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-weight: 500;
+    }
+
+    /* ── Legend ── */
+    .legend {
+      position: absolute;
+      bottom: 24px;
+      right: 12px;
+      background: white;
+      border-radius: 8px;
+      padding: 10px 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+      z-index: 500;
+      font-size: 0.72rem;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .legend-title {
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 0.64rem;
+      margin-bottom: 7px;
+    }
+    .legend-row { display: flex; align-items: center; gap: 7px; margin: 4px 0; }
+    .legend-dot {
+      width: 11px; height: 11px; border-radius: 50%;
+    }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      padding: 10px 22px 0;
+    }
+    .filter-btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.7rem;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: white;
+      color: var(--forest);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: var(--forest);
+      color: white;
+      border-color: var(--forest);
+    }
+    .meal-name a, .rest-name a {
+      color: inherit;
+      text-decoration: none;
+      border-bottom: 1px solid var(--border);
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .meal-name a:hover, .rest-name a:hover {
+      color: var(--terra);
+      border-bottom-color: var(--terra);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Berkeley <span>Weekend Eats</span></h1>
+  <p>Jones Berkeley · Aiden by Best Western · 2 days</p>
+</header>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <!-- Itinerary -->
+    <div class="itinerary">
+      <div class="section-label">Recommended Itinerary</div>
+
+      <div class="day-block">
+        <div class="day-title">Saturday</div>
+        <div class="meal-row" onclick="focusRestaurant('tanzees')">
+          <div class="meal-time">Brunch</div>
+          <div class="meal-info">
+            <div class="meal-name"><a href="https://maps.google.com/?q=Tanzies+1453+Dwight+Way+Berkeley+CA" target="_blank">Tanzie's (清迈)</a></div>
+            <div class="meal-tag">Thai brunch · walk-in · casual start</div>
+          </div>
+          <div class="meal-star">★</div>
+        </div>
+        <div class="meal-row" onclick="focusRestaurant('yume-mori')">
+          <div class="meal-time">Snack</div>
+          <div class="meal-info">
+            <div class="meal-name"><a href="https://maps.google.com/?q=Yume+Mori+Berkeley+CA" target="_blank">Yume Mori</a></div>
+            <div class="meal-tag">Matcha crepe · College Ave stroll after</div>
+          </div>
+        </div>
+        <div class="meal-row" onclick="focusRestaurant('la-marcha')">
+          <div class="meal-time">Dinner</div>
+          <div class="meal-info">
+            <div class="meal-name"><a href="https://maps.google.com/?q=La+Marcha+Tapas+Bar+2026+San+Pablo+Ave+Berkeley+CA" target="_blank">La Marcha Tapas Bar</a></div>
+            <div class="meal-tag">Walk-in friendly · local favorite Spanish · lively vibe</div>
+          </div>
+          <div class="meal-star">★</div>
+        </div>
+        <div class="meal-row" onclick="focusRestaurant('moo-bong-ri')">
+          <div class="meal-time">Late</div>
+          <div class="meal-info">
+            <div class="meal-name"><a href="https://maps.google.com/?q=Moo+Bong+Ri+Oakland+CA" target="_blank">Moo Bong Ri</a></div>
+            <div class="meal-tag">Korean cheese ribs · fun late-night</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="day-block">
+        <div class="day-title">Sunday</div>
+        <div class="meal-row" onclick="focusRestaurant('donghai')">
+          <div class="meal-time">Brunch</div>
+          <div class="meal-info">
+            <div class="meal-name"><a href="https://maps.google.com/maps/place/Hong+Kong+East+Ocean+Seafood+Restaurant/@37.8374689,-122.3148201" target="_blank">Hong Kong East Ocean (东海)</a></div>
+            <div class="meal-tag">HK café · congee, egg tarts, milk tea · walk-in</div>
+          </div>
+          <div class="meal-star">★</div>
+        </div>
+        <div class="meal-row">
+          <div class="meal-time">Activity</div>
+          <div class="meal-info">
+            <div class="meal-name"><a href="https://maps.google.com/?q=Cesar+Chavez+Park+Berkeley+CA" target="_blank">Berkeley Marina · Cesar Chavez Park</a></div>
+            <div class="meal-tag">Free · bay views, kite flying · right next to Skates</div>
+          </div>
+        </div>
+        <div class="meal-row" onclick="focusRestaurant('skates')">
+          <div class="meal-time">Lunch</div>
+          <div class="meal-info">
+            <div class="meal-name"><a href="https://maps.google.com/?q=Skates+on+the+Bay+100+Seawall+Dr+Berkeley+CA" target="_blank">Skates on the Bay</a></div>
+            <div class="meal-tag">Waterfront · garlic bread · wrap up the weekend here</div>
+          </div>
+          <div class="meal-star">★</div>
+        </div>
+      </div>
+
+      <div class="day-block">
+        <div class="day-title">Swap-ins</div>
+        <div class="meal-row" onclick="focusRestaurant('cafe-etoile')">
+          <div class="meal-time">Picnic</div>
+          <div class="meal-info">
+            <div class="meal-name"><a href="https://maps.google.com/?q=Cafe+Etoile+Berkeley+CA" target="_blank">Café Etoile</a></div>
+            <div class="meal-tag">Sandwiches + sushi · take to a lawn</div>
+          </div>
+        </div>
+        <div class="meal-row" onclick="focusRestaurant('secrets-of-tiger')">
+          <div class="meal-time">Dinner</div>
+          <div class="meal-info">
+            <div class="meal-name"><a href="https://maps.google.com/?q=Secrets+of+Tiger+Berkeley+CA" target="_blank">Secrets of Tiger</a></div>
+            <div class="meal-tag">Thai · walk-in · solid backup dinner</div>
+          </div>
+        </div>
+        <div class="meal-row" onclick="focusRestaurant('iyasare')">
+          <div class="meal-time">Dinner</div>
+          <div class="meal-info">
+            <div class="meal-name"><a href="https://maps.google.com/?q=Iyasare+1830+4th+St+Berkeley+CA" target="_blank">Iyasare</a></div>
+            <div class="meal-tag">Upscale Japanese on 4th St</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="filterCuisine('all', this)">All</button>
+      <button class="filter-btn" onclick="filterCuisine('japanese', this)">Japanese</button>
+      <button class="filter-btn" onclick="filterCuisine('chinese', this)">Chinese</button>
+      <button class="filter-btn" onclick="filterCuisine('thai', this)">Thai</button>
+      <button class="filter-btn" onclick="filterCuisine('spanish', this)">Spanish</button>
+      <button class="filter-btn" onclick="filterCuisine('korean', this)">Korean</button>
+      <button class="filter-btn" onclick="filterCuisine('other', this)">Other</button>
+    </div>
+
+    <!-- Restaurant List -->
+    <div class="rest-list" id="rest-list">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div id="map"></div>
+</div>
+
+<script>
+const RESTAURANTS = [
+  {
+    id: 'great-china',
+    name: 'Great China',
+    cuisine: 'chinese',
+    cuisineLabel: 'Chinese',
+    lat: 37.8675,
+    lng: -122.2670,
+    address: '2115 Kittredge St, Berkeley',
+    url: 'https://maps.google.com/?q=Great+China+2115+Kittredge+St+Berkeley+CA',
+    note: 'Widely considered the best Chinese restaurant in the Bay Area. The Peking duck is legendary — order ahead.',
+    highlight: true,
+    meal: 'Saturday Lunch ★'
+  },
+  {
+    id: 'ippuku',
+    name: 'Ippuku',
+    cuisine: 'japanese',
+    cuisineLabel: 'Japanese · Yakitori',
+    lat: 37.8697,
+    lng: -122.2685,
+    address: '2130 Center St, Berkeley',
+    url: 'https://maps.google.com/?q=Ippuku+2130+Center+St+Berkeley+CA',
+    note: 'Authentic Kyoto-style izakaya. Best yakitori in Berkeley. Omakase courses available. Make reservations.',
+    highlight: true,
+    meal: 'Saturday Dinner ★'
+  },
+  {
+    id: 'kiraku',
+    name: 'Kiraku',
+    cuisine: 'japanese',
+    cuisineLabel: 'Japanese · Izakaya',
+    lat: 37.8573,
+    lng: -122.2588,
+    address: '2566 Telegraph Ave, Berkeley',
+    url: 'https://maps.google.com/?q=Kiraku+2566+Telegraph+Ave+Berkeley+CA',
+    note: 'Cozy izakaya on Telegraph. Great small plates and sake selection.',
+    highlight: false
+  },
+  {
+    id: 'iyasare',
+    name: 'Iyasare',
+    cuisine: 'japanese',
+    cuisineLabel: 'Japanese · Upscale',
+    lat: 37.8703,
+    lng: -122.2968,
+    address: '1830 4th St, Berkeley',
+    url: 'https://maps.google.com/?q=Iyasare+1830+4th+St+Berkeley+CA',
+    note: 'Refined Japanese cuisine on the 4th St shopping corridor. Beautiful plating, seasonal ingredients.',
+    highlight: true,
+    meal: 'Alt Saturday Dinner'
+  },
+  {
+    id: 'donghai',
+    name: 'Hong Kong East Ocean (东海)',
+    cuisine: 'chinese',
+    cuisineLabel: 'HK Seafood · Dim Sum',
+    lat: 37.8374689,
+    lng: -122.3148201,
+    address: '3199 Powell St, Emeryville',
+    url: 'https://maps.google.com/maps/place/Hong+Kong+East+Ocean+Seafood+Restaurant/@37.8374689,-122.3148201',
+    note: 'Classic Hong Kong-style cha chaan teng. Congee, egg tarts, pineapple buns, milk tea. Weekend dim sum.',
+    highlight: true,
+    meal: 'Sunday Brunch ★'
+  },
+  {
+    id: 'la-marcha',
+    name: 'La Marcha Tapas Bar',
+    cuisine: 'spanish',
+    cuisineLabel: 'Spanish · Tapas',
+    lat: 37.8729,
+    lng: -122.2811,
+    address: '2026 San Pablo Ave, Berkeley',
+    url: 'https://maps.google.com/?q=La+Marcha+Tapas+Bar+2026+San+Pablo+Ave+Berkeley+CA',
+    note: 'Beloved local Spanish tapas bar. Lively atmosphere, excellent patatas bravas and jamón. A local go-to.',
+    highlight: true,
+    meal: 'Sat Dinner ★'
+  },
+  {
+    id: 'skates',
+    name: 'Skates on the Bay',
+    cuisine: 'seafood',
+    cuisineLabel: 'American · Seafood',
+    lat: 37.8671,
+    lng: -122.3022,
+    address: '100 Seawall Dr, Berkeley Marina',
+    url: 'https://maps.google.com/?q=Skates+on+the+Bay+100+Seawall+Dr+Berkeley+CA',
+    note: 'Stunning bay views with the SF skyline. Famous for its garlic bread. Perfect Sunday send-off lunch.',
+    highlight: true,
+    meal: 'Sunday Lunch ★'
+  },
+  {
+    id: 'secrets-of-tiger',
+    name: 'Secrets of Tiger',
+    cuisine: 'thai',
+    cuisineLabel: 'Thai',
+    lat: 37.8678,
+    lng: -122.2595,
+    address: 'Downtown Berkeley',
+    url: 'https://maps.google.com/?q=Secrets+of+Tiger+Berkeley+CA',
+    note: 'Solid Thai spot in Berkeley. Good curries and noodle dishes.',
+    highlight: false
+  },
+  {
+    id: 'marica',
+    name: 'Marica',
+    cuisine: 'seafood',
+    cuisineLabel: 'Seafood · American',
+    lat: 37.8390,
+    lng: -122.2650,
+    address: 'Oakland',
+    url: 'https://maps.google.com/?q=Marica+Oakland+CA',
+    note: 'Fresh seafood, neighborhood gem. Great oysters and fish dishes.',
+    highlight: false
+  },
+  {
+    id: 'moo-bong-ri',
+    name: 'Moo Bong Ri',
+    cuisine: 'korean',
+    cuisineLabel: 'Korean · Ribs',
+    lat: 37.7955,
+    lng: -122.2207,
+    address: 'Oakland',
+    url: 'https://maps.google.com/?q=Moo+Bong+Ri+Oakland+CA',
+    note: 'Korean cheese ribs — a fun, indulgent late-night spot. Very photogenic dish.',
+    highlight: true,
+    meal: 'Late Night'
+  },
+  {
+    id: 'yume-mori',
+    name: 'Yume Mori',
+    cuisine: 'dessert',
+    cuisineLabel: 'Japanese · Dessert',
+    lat: 37.8576,
+    lng: -122.2545,
+    address: 'Berkeley / College Ave area',
+    url: 'https://maps.google.com/?q=Yume+Mori+Matcha+Crepe+Berkeley+CA',
+    note: 'Matcha crepes and Japanese-style desserts. Lovely afternoon stop on College Ave.',
+    highlight: false
+  },
+  {
+    id: 'cafe-etoile',
+    name: 'Café Etoile',
+    cuisine: 'other',
+    cuisineLabel: 'Café · Sandwiches',
+    lat: 37.8640,
+    lng: -122.2610,
+    address: 'Berkeley',
+    url: 'https://maps.google.com/?q=Cafe+Etoile+Berkeley+CA',
+    note: 'Grab sandwiches or sushi and take them to a lawn for a picnic. Relaxed and charming.',
+    highlight: false
+  },
+  {
+    id: 'plantea',
+    name: 'Plantea',
+    cuisine: 'other',
+    cuisineLabel: 'Plant-based · Café',
+    lat: 37.8690,
+    lng: -122.2680,
+    address: 'Berkeley',
+    url: 'https://maps.google.com/?q=Plantea+Berkeley+CA',
+    note: 'Plant-based café. Great for a light meal or if anyone in the group is vegetarian/vegan.',
+    highlight: false
+  },
+  {
+    id: 'fogo',
+    name: 'Fogo de Chao (Emeryville)',
+    cuisine: 'brazilian',
+    cuisineLabel: 'Brazilian BBQ',
+    lat: 37.8345,
+    lng: -122.2890,
+    address: 'Emeryville',
+    url: 'https://maps.google.com/?q=Fogo+de+Chao+Emeryville+CA',
+    note: 'All-you-can-eat Brazilian churrasco. Big, festive, great for groups. A short drive into Emeryville.',
+    highlight: false
+  },
+  {
+    id: 'ippudo',
+    name: 'Ippudo',
+    cuisine: 'japanese',
+    cuisineLabel: 'Japanese · Ramen',
+    lat: 37.8690,
+    lng: -122.2679,
+    address: 'Downtown Berkeley',
+    url: 'https://maps.google.com/?q=Ippudo+Berkeley+CA',
+    note: 'Popular ramen chain with a strong Berkeley following. Rich tonkotsu broth, great for a quick hearty meal.',
+    highlight: false
+  },
+  {
+    id: 'corte-madera',
+    name: 'Corte Madera',
+    cuisine: 'other',
+    cuisineLabel: 'American · Casual',
+    lat: 37.8620,
+    lng: -122.2640,
+    address: 'Berkeley',
+    url: 'https://maps.google.com/?q=Corte+Madera+Restaurant+Berkeley+CA',
+    note: 'Neighborhood spot recommended by locals. Casual and comfortable.',
+    highlight: false
+  },
+  {
+    id: 'tanzees',
+    name: "Tanzie's (清迈 Brunch)",
+    cuisine: 'thai',
+    cuisineLabel: 'Thai · Brunch',
+    lat: 37.862261,
+    lng: -122.2814784,
+    address: '1453 Dwight Way, Berkeley',
+    url: 'https://maps.google.com/?q=Tanzies+1453+Dwight+Way+Berkeley+CA',
+    note: 'Chiang Mai-inspired Thai brunch cafe. Casual, no reservations needed. Great way to start the morning.',
+    highlight: true,
+    meal: 'Sat Brunch ★'
+  }
+];
+
+// Anchor points
+const ANCHORS = [
+  { name: 'Jones Berkeley (1080 Jones St)', lat: 37.875856, lng: -122.2949862, icon: '🏠' },
+  { name: 'Aiden by Best Western (1499 University Ave)', lat: 37.8694, lng: -122.2892, icon: '🏨' }
+];
+
+const cuisineColors = {
+  japanese: '#5b7fa6',
+  chinese:  '#c04a2a',
+  thai:     '#2d8c5e',
+  spanish:  '#b8831a',
+  korean:   '#8a4fa8',
+  seafood:  '#2c7098',
+  brazilian:'#3a7a35',
+  dessert:  '#b05080',
+  other:    '#6b8a7a'
+};
+
+// Init map
+const map = L.map('map', { zoomControl: false }).setView([37.860, -122.273], 13);
+L.control.zoom({ position: 'topleft' }).addTo(map);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+  maxZoom: 19
+}).addTo(map);
+
+// Custom marker
+function makeIcon(color, isHighlight) {
+  const size = isHighlight ? 14 : 10;
+  const ring = isHighlight ? `<circle cx="16" cy="16" r="13" fill="none" stroke="${color}" stroke-width="2.5" opacity="0.4"/>` : '';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+    ${ring}
+    <circle cx="16" cy="16" r="${size}" fill="${color}" opacity="0.92"/>
+    ${isHighlight ? `<circle cx="16" cy="16" r="5" fill="white" opacity="0.8"/>` : ''}
+  </svg>`;
+  return L.divIcon({
+    html: svg,
+    className: '',
+    iconSize: [32, 32],
+    iconAnchor: [16, 16],
+    popupAnchor: [0, -18]
+  });
+}
+
+// Anchor markers
+ANCHORS.forEach(a => {
+  const anchorSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
+    <path d="M16 2 C8 2 2 8 2 16 C2 26 16 38 16 38 C16 38 30 26 30 16 C30 8 24 2 16 2Z" fill="#2c3e2d" stroke="white" stroke-width="1.5"/>
+    <circle cx="16" cy="15" r="6" fill="white"/>
+  </svg>`;
+  L.marker([a.lat, a.lng], {
+    icon: L.divIcon({ html: anchorSvg, className: '', iconSize: [32, 40], iconAnchor: [16, 38], popupAnchor: [0, -40] })
+  }).bindPopup(`<div style="font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:500">${a.icon} ${a.name}</div>`).addTo(map);
+});
+
+// Restaurant markers
+const markers = {};
+let activeFilter = 'all';
+
+function buildMarkers() {
+  RESTAURANTS.forEach(r => {
+    if (markers[r.id]) markers[r.id].remove();
+    const color = cuisineColors[r.cuisine] || '#6b8a7a';
+    const marker = L.marker([r.lat, r.lng], { icon: makeIcon(color, r.highlight) });
+    const mealBadge = r.meal ? `<span class="popup-highlight">${r.meal}</span>` : '';
+    marker.bindPopup(`
+      <div>
+        <div class="popup-name"><a href="${r.url}" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px solid #c0612b">${r.name}</a></div>
+        <div class="popup-cuisine">${r.cuisineLabel}</div>
+        <div class="popup-note">${r.note}</div>
+        ${mealBadge}
+      </div>
+    `);
+    marker.addTo(map);
+    markers[r.id] = marker;
+  });
+}
+
+buildMarkers();
+
+// Sidebar list
+function renderList(filter) {
+  const el = document.getElementById('rest-list');
+  const filtered = filter === 'all' ? RESTAURANTS : RESTAURANTS.filter(r => r.cuisine === filter);
+  el.innerHTML = filtered.map(r => {
+    const color = cuisineColors[r.cuisine] || '#6b8a7a';
+    const starBadge = r.highlight ? `<span class="star-badge">★ Pick</span>` : '';
+    return `<div class="rest-card ${r.highlight ? 'highlight' : ''}" onclick="focusRestaurant('${r.id}')">
+      <div class="pin-dot ${r.cuisine}" style="background:${color}">${r.cuisineLabel.charAt(0)}</div>
+      <div class="rest-info">
+        <div class="rest-name"><a href="${r.url}" target="_blank" onclick="event.stopPropagation()">${r.name}</a>${starBadge}</div>
+        <div class="rest-meta">${r.cuisineLabel} · ${r.meal ? r.meal : r.address.split(',')[0]}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+renderList('all');
+
+function focusRestaurant(id) {
+  const r = RESTAURANTS.find(x => x.id === id);
+  if (!r) return;
+  map.flyTo([r.lat, r.lng], 15, { duration: 0.8 });
+  setTimeout(() => markers[id] && markers[id].openPopup(), 850);
+}
+
+function filterCuisine(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeFilter = type;
+  renderList(type);
+  // hide/show markers
+  RESTAURANTS.forEach(r => {
+    if (!markers[r.id]) return;
+    if (type === 'all' || r.cuisine === type) {
+      markers[r.id].addTo(map);
+    } else {
+      markers[r.id].remove();
+    }
+  });
+}
+
+// Legend
+const legend = L.control({ position: 'bottomright' });
+legend.onAdd = () => {
+  const div = L.DomUtil.create('div', 'legend');
+  div.innerHTML = `<div class="legend-title">Cuisine</div>` +
+    Object.entries({
+      Japanese: '#5b7fa6',
+      Chinese: '#c04a2a',
+      Thai: '#2d8c5e',
+      Spanish: '#b8831a',
+      Korean: '#8a4fa8',
+      Seafood: '#2c7098',
+      Brazilian: '#3a7a35',
+      Dessert: '#b05080',
+      Other: '#6b8a7a'
+    }).map(([k, v]) => `<div class="legend-row"><div class="legend-dot" style="background:${v}"></div>${k}</div>`).join('');
+  return div;
+};
+legend.addTo(map);
+</script>
+</body>
+</html>
