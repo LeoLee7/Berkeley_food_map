@@ -429,6 +429,7 @@
       <button class="filter-btn" data-cuisine="thai"     onclick="filterCuisine('thai', this)">Thai</button>
       <button class="filter-btn" data-cuisine="spanish"  onclick="filterCuisine('spanish', this)">Spanish</button>
       <button class="filter-btn" data-cuisine="korean"   onclick="filterCuisine('korean', this)">Korean</button>
+      <button class="filter-btn" data-cuisine="italian"  onclick="filterCuisine('italian', this)">Italian</button>
       <button class="filter-btn" data-cuisine="other"    onclick="filterCuisine('other', this)">Other</button>
     </div>
 
@@ -716,6 +717,20 @@ const RESTAURANTS = [
     note: 'Chiang Mai-inspired Thai brunch cafe. Casual, no reservations needed. Great way to start the morning.',
     highlight: true,
     meal: 'Sat Brunch ★'
+  },
+  {
+    id: 'passione-emporio',
+    name: 'Passione Emporio / Hot Italian',
+    cuisine: 'italian',
+    cuisineLabel: 'Italian · Pizza & Pasta',
+    type: 'meal',
+    lat: 37.8583,
+    lng: -122.3028,
+    address: '2324A 5th St, Berkeley',
+    url: 'https://maps.google.com/?q=Passione+Emporio+2324+5th+St+Berkeley+CA',
+    yelp: 'https://www.yelp.com/biz/passione-emporio-berkeley-5',
+    note: 'Authentic Italian trattoria in West Berkeley. Wood-fired pizza, handmade pasta, and gelato. Chef from Cinque Terre sources local organic ingredients.',
+    highlight: false
   }
 ];
 
@@ -734,6 +749,7 @@ const cuisineColors = {
   seafood:  '#2c7098',
   brazilian:'#3a7a35',
   dessert:  '#b05080',
+  italian:  '#c46528',
   other:    '#6b8a7a'
 };
 
