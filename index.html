@@ -282,10 +282,15 @@
       font-size: 0.64rem;
       margin-bottom: 7px;
     }
-    .legend-row { display: flex; align-items: center; gap: 7px; margin: 4px 0; }
-    .legend-dot {
-      width: 11px; height: 11px; border-radius: 50%;
+    .legend-row {
+      display: flex; align-items: center; gap: 7px; margin: 3px 0;
+      padding: 3px 6px; border-radius: 4px; cursor: pointer;
+      transition: background 0.15s; user-select: none;
     }
+    .legend-row:hover { background: #f0ede8; }
+    .legend-row.active { background: var(--forest); color: white; }
+    .legend-row.active svg rect, .legend-row.active svg circle { fill: white !important; }
+    .legend-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
 
     .filter-bar {
       display: flex;
@@ -361,13 +366,6 @@
           </div>
           <div class="meal-star">★</div>
         </div>
-        <div class="meal-row" onclick="focusRestaurant('moo-bong-ri')">
-          <div class="meal-time">Late</div>
-          <div class="meal-info">
-            <div class="meal-name"><a href="https://maps.google.com/?q=Moo+Bong+Ri+Oakland+CA" target="_blank">Moo Bong Ri</a></div>
-            <div class="meal-tag">Korean cheese ribs · fun late-night</div>
-          </div>
-        </div>
       </div>
 
       <div class="day-block">
@@ -426,12 +424,12 @@
     <!-- Filter -->
     <div class="filter-bar">
       <button class="filter-btn active" onclick="filterCuisine('all', this)">All</button>
-      <button class="filter-btn" onclick="filterCuisine('japanese', this)">Japanese</button>
-      <button class="filter-btn" onclick="filterCuisine('chinese', this)">Chinese</button>
-      <button class="filter-btn" onclick="filterCuisine('thai', this)">Thai</button>
-      <button class="filter-btn" onclick="filterCuisine('spanish', this)">Spanish</button>
-      <button class="filter-btn" onclick="filterCuisine('korean', this)">Korean</button>
-      <button class="filter-btn" onclick="filterCuisine('other', this)">Other</button>
+      <button class="filter-btn" data-cuisine="japanese" onclick="filterCuisine('japanese', this)">Japanese</button>
+      <button class="filter-btn" data-cuisine="chinese"  onclick="filterCuisine('chinese', this)">Chinese</button>
+      <button class="filter-btn" data-cuisine="thai"     onclick="filterCuisine('thai', this)">Thai</button>
+      <button class="filter-btn" data-cuisine="spanish"  onclick="filterCuisine('spanish', this)">Spanish</button>
+      <button class="filter-btn" data-cuisine="korean"   onclick="filterCuisine('korean', this)">Korean</button>
+      <button class="filter-btn" data-cuisine="other"    onclick="filterCuisine('other', this)">Other</button>
     </div>
 
     <!-- Restaurant List -->
@@ -451,10 +449,12 @@ const RESTAURANTS = [
     name: 'Great China',
     cuisine: 'chinese',
     cuisineLabel: 'Chinese',
+    type: 'meal',
     lat: 37.8675,
     lng: -122.2670,
     address: '2115 Kittredge St, Berkeley',
     url: 'https://maps.google.com/?q=Great+China+2115+Kittredge+St+Berkeley+CA',
+    yelp: 'https://www.yelp.com/biz/great-china-berkeley',
     note: 'Widely considered the best Chinese restaurant in the Bay Area. The Peking duck is legendary — order ahead.',
     highlight: true,
     meal: 'Saturday Lunch ★'
@@ -464,10 +464,12 @@ const RESTAURANTS = [
     name: 'Ippuku',
     cuisine: 'japanese',
     cuisineLabel: 'Japanese · Yakitori',
+    type: 'meal',
     lat: 37.8697,
     lng: -122.2685,
     address: '2130 Center St, Berkeley',
     url: 'https://maps.google.com/?q=Ippuku+2130+Center+St+Berkeley+CA',
+    yelp: 'https://www.yelp.com/biz/ippuku-berkeley',
     note: 'Authentic Kyoto-style izakaya. Best yakitori in Berkeley. Omakase courses available. Make reservations.',
     highlight: true,
     meal: 'Saturday Dinner ★'
@@ -477,10 +479,12 @@ const RESTAURANTS = [
     name: 'Kiraku',
     cuisine: 'japanese',
     cuisineLabel: 'Japanese · Izakaya',
+    type: 'meal',
     lat: 37.8573,
     lng: -122.2588,
     address: '2566 Telegraph Ave, Berkeley',
     url: 'https://maps.google.com/?q=Kiraku+2566+Telegraph+Ave+Berkeley+CA',
+    yelp: 'https://www.yelp.com/biz/kiraku-berkeley',
     note: 'Cozy izakaya on Telegraph. Great small plates and sake selection.',
     highlight: false
   },
@@ -489,10 +493,12 @@ const RESTAURANTS = [
     name: 'Iyasare',
     cuisine: 'japanese',
     cuisineLabel: 'Japanese · Upscale',
+    type: 'meal',
     lat: 37.8703,
     lng: -122.2968,
     address: '1830 4th St, Berkeley',
     url: 'https://maps.google.com/?q=Iyasare+1830+4th+St+Berkeley+CA',
+    yelp: 'https://www.yelp.com/biz/iyasare-berkeley',
     note: 'Refined Japanese cuisine on the 4th St shopping corridor. Beautiful plating, seasonal ingredients.',
     highlight: true,
     meal: 'Alt Saturday Dinner'
@@ -502,11 +508,13 @@ const RESTAURANTS = [
     name: 'Hong Kong East Ocean (东海)',
     cuisine: 'chinese',
     cuisineLabel: 'HK Seafood · Dim Sum',
+    type: 'meal',
     lat: 37.8374689,
     lng: -122.3148201,
     address: '3199 Powell St, Emeryville',
     url: 'https://maps.google.com/maps/place/Hong+Kong+East+Ocean+Seafood+Restaurant/@37.8374689,-122.3148201',
-    note: 'Classic Hong Kong-style cha chaan teng. Congee, egg tarts, pineapple buns, milk tea. Weekend dim sum.',
+    yelp: 'https://www.yelp.com/biz/hong-kong-east-ocean-seafood-restaurant-emeryville',
+    note: 'Classic Hong Kong-style seafood and dim sum. Weekend brunch is popular for congee, egg tarts, and milk tea.',
     highlight: true,
     meal: 'Sunday Brunch ★'
   },
@@ -515,10 +523,12 @@ const RESTAURANTS = [
     name: 'La Marcha Tapas Bar',
     cuisine: 'spanish',
     cuisineLabel: 'Spanish · Tapas',
+    type: 'meal',
     lat: 37.8729,
     lng: -122.2811,
     address: '2026 San Pablo Ave, Berkeley',
     url: 'https://maps.google.com/?q=La+Marcha+Tapas+Bar+2026+San+Pablo+Ave+Berkeley+CA',
+    yelp: 'https://www.yelp.com/biz/la-marcha-berkeley',
     note: 'Beloved local Spanish tapas bar. Lively atmosphere, excellent patatas bravas and jamón. A local go-to.',
     highlight: true,
     meal: 'Sat Dinner ★'
@@ -528,10 +538,12 @@ const RESTAURANTS = [
     name: 'Skates on the Bay',
     cuisine: 'seafood',
     cuisineLabel: 'American · Seafood',
+    type: 'meal',
     lat: 37.8671,
     lng: -122.3022,
     address: '100 Seawall Dr, Berkeley Marina',
     url: 'https://maps.google.com/?q=Skates+on+the+Bay+100+Seawall+Dr+Berkeley+CA',
+    yelp: 'https://www.yelp.com/biz/skates-on-the-bay-berkeley',
     note: 'Stunning bay views with the SF skyline. Famous for its garlic bread. Perfect Sunday send-off lunch.',
     highlight: true,
     meal: 'Sunday Lunch ★'
@@ -541,10 +553,12 @@ const RESTAURANTS = [
     name: 'Secrets of Tiger',
     cuisine: 'thai',
     cuisineLabel: 'Thai',
+    type: 'meal',
     lat: 37.8678,
     lng: -122.2595,
     address: 'Downtown Berkeley',
     url: 'https://maps.google.com/?q=Secrets+of+Tiger+Berkeley+CA',
+    yelp: 'https://www.yelp.com/search?find_desc=Secrets+of+Tiger&find_loc=Berkeley%2C+CA',
     note: 'Solid Thai spot in Berkeley. Good curries and noodle dishes.',
     highlight: false
   },
@@ -553,10 +567,12 @@ const RESTAURANTS = [
     name: 'Marica',
     cuisine: 'seafood',
     cuisineLabel: 'Seafood · American',
+    type: 'meal',
     lat: 37.8390,
     lng: -122.2650,
     address: 'Oakland',
     url: 'https://maps.google.com/?q=Marica+Oakland+CA',
+    yelp: 'https://www.yelp.com/biz/marica-oakland',
     note: 'Fresh seafood, neighborhood gem. Great oysters and fish dishes.',
     highlight: false
   },
@@ -565,23 +581,26 @@ const RESTAURANTS = [
     name: 'Moo Bong Ri',
     cuisine: 'korean',
     cuisineLabel: 'Korean · Ribs',
+    type: 'meal',
     lat: 37.7955,
     lng: -122.2207,
     address: 'Oakland',
     url: 'https://maps.google.com/?q=Moo+Bong+Ri+Oakland+CA',
-    note: 'Korean cheese ribs — a fun, indulgent late-night spot. Very photogenic dish.',
-    highlight: true,
-    meal: 'Late Night'
+    yelp: 'https://www.yelp.com/biz/moo-bong-ri-oakland',
+    note: 'Korean cheese ribs — a fun, indulgent spot. Very photogenic dish.',
+    highlight: false
   },
   {
     id: 'yume-mori',
     name: 'Yume Mori',
     cuisine: 'dessert',
     cuisineLabel: 'Japanese · Dessert',
+    type: 'snack',
     lat: 37.8576,
     lng: -122.2545,
     address: 'Berkeley / College Ave area',
     url: 'https://maps.google.com/?q=Yume+Mori+Matcha+Crepe+Berkeley+CA',
+    yelp: 'https://www.yelp.com/search?find_desc=Yume+Mori&find_loc=Berkeley%2C+CA',
     note: 'Matcha crepes and Japanese-style desserts. Lovely afternoon stop on College Ave.',
     highlight: false
   },
@@ -590,10 +609,12 @@ const RESTAURANTS = [
     name: 'Café Etoile',
     cuisine: 'other',
     cuisineLabel: 'Café · Sandwiches',
+    type: 'tea',
     lat: 37.8640,
     lng: -122.2610,
     address: 'Berkeley',
     url: 'https://maps.google.com/?q=Cafe+Etoile+Berkeley+CA',
+    yelp: 'https://www.yelp.com/search?find_desc=Cafe+Etoile&find_loc=Berkeley%2C+CA',
     note: 'Grab sandwiches or sushi and take them to a lawn for a picnic. Relaxed and charming.',
     highlight: false
   },
@@ -602,22 +623,26 @@ const RESTAURANTS = [
     name: 'Plantea',
     cuisine: 'other',
     cuisineLabel: 'Plant-based · Café',
+    type: 'tea',
     lat: 37.8690,
     lng: -122.2680,
     address: 'Berkeley',
     url: 'https://maps.google.com/?q=Plantea+Berkeley+CA',
+    yelp: 'https://www.yelp.com/search?find_desc=Plantea&find_loc=Berkeley%2C+CA',
     note: 'Plant-based café. Great for a light meal or if anyone in the group is vegetarian/vegan.',
     highlight: false
   },
   {
     id: 'fogo',
     name: 'Fogo de Chao (Emeryville)',
-    cuisine: 'brazilian',
+    cuisine: 'other',
     cuisineLabel: 'Brazilian BBQ',
+    type: 'meal',
     lat: 37.8345,
     lng: -122.2890,
     address: 'Emeryville',
     url: 'https://maps.google.com/?q=Fogo+de+Chao+Emeryville+CA',
+    yelp: 'https://www.yelp.com/biz/fogo-de-chao-emeryville',
     note: 'All-you-can-eat Brazilian churrasco. Big, festive, great for groups. A short drive into Emeryville.',
     highlight: false
   },
@@ -626,10 +651,12 @@ const RESTAURANTS = [
     name: 'Ippudo',
     cuisine: 'japanese',
     cuisineLabel: 'Japanese · Ramen',
+    type: 'meal',
     lat: 37.8690,
     lng: -122.2679,
     address: 'Downtown Berkeley',
     url: 'https://maps.google.com/?q=Ippudo+Berkeley+CA',
+    yelp: 'https://www.yelp.com/biz/ippudo-berkeley',
     note: 'Popular ramen chain with a strong Berkeley following. Rich tonkotsu broth, great for a quick hearty meal.',
     highlight: false
   },
@@ -638,11 +665,41 @@ const RESTAURANTS = [
     name: 'Corte Madera',
     cuisine: 'other',
     cuisineLabel: 'American · Casual',
+    type: 'meal',
     lat: 37.8620,
     lng: -122.2640,
     address: 'Berkeley',
     url: 'https://maps.google.com/?q=Corte+Madera+Restaurant+Berkeley+CA',
+    yelp: 'https://www.yelp.com/search?find_desc=Corte+Madera&find_loc=Berkeley%2C+CA',
     note: 'Neighborhood spot recommended by locals. Casual and comfortable.',
+    highlight: false
+  },
+  {
+    id: 'u-dessert',
+    name: 'U:Dessert Story',
+    cuisine: 'dessert',
+    cuisineLabel: 'Dessert · Taiwanese',
+    type: 'snack',
+    lat: 37.8740203,
+    lng: -122.2684191,
+    address: '1849 Shattuck Ave, Berkeley',
+    url: 'https://www.google.com/maps/place/U+:Dessert+Story/@37.8740203,-122.270994,17z/data=!3m1!4b1!4m6!3m5!1s0x80857f0bc2fa54b3:0x92b95255dbd47ab5!8m2!3d37.8740203!4d-122.2684191!16s%2Fg%2F11fs2z9qy9?entry=ttu&g_ep=EgoyMDI2MDIyNS4wIKXMDSoASAFQAw%3D%3D',
+    yelp: 'https://www.yelp.com/biz/u-dessert-story-berkeley',
+    note: 'Taiwanese-style dessert shop. Shaved ice, mochi, and creative sweet drinks.',
+    highlight: false
+  },
+  {
+    id: 'sheng-kee',
+    name: 'Sheng Kee Bakery',
+    cuisine: 'dessert',
+    cuisineLabel: 'Japanese Bakery',
+    type: 'snack',
+    lat: 37.8620,
+    lng: -122.2588,
+    address: '2307 Telegraph Ave, Berkeley',
+    url: 'https://maps.google.com/?q=Sheng+Kee+Bakery+2307+Telegraph+Ave+Berkeley+CA',
+    yelp: 'https://www.yelp.com/biz/sheng-kee-bakery-berkeley',
+    note: 'Japanese bakery chain. Great for pineapple buns, egg tarts, and soft bread. Good quick snack stop on Telegraph.',
     highlight: false
   },
   {
@@ -650,10 +707,12 @@ const RESTAURANTS = [
     name: "Tanzie's (清迈 Brunch)",
     cuisine: 'thai',
     cuisineLabel: 'Thai · Brunch',
+    type: 'meal',
     lat: 37.862261,
     lng: -122.2814784,
     address: '1453 Dwight Way, Berkeley',
     url: 'https://maps.google.com/?q=Tanzies+1453+Dwight+Way+Berkeley+CA',
+    yelp: 'https://www.yelp.com/biz/tanzies-berkeley',
     note: 'Chiang Mai-inspired Thai brunch cafe. Casual, no reservations needed. Great way to start the morning.',
     highlight: true,
     meal: 'Sat Brunch ★'
@@ -688,13 +747,22 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
 }).addTo(map);
 
 // Custom marker
-function makeIcon(color, isHighlight) {
-  const size = isHighlight ? 14 : 10;
-  const ring = isHighlight ? `<circle cx="16" cy="16" r="13" fill="none" stroke="${color}" stroke-width="2.5" opacity="0.4"/>` : '';
+function makeIcon(color, isHighlight, type) {
+  const size = isHighlight ? 13 : 9;
+  const ring = isHighlight ? `<circle cx="16" cy="16" r="14" fill="none" stroke="${color}" stroke-width="2.5" opacity="0.35"/>` : '';
+  let shape;
+  if (type === 'snack') {
+    const s = size * 0.82;
+    shape = `<rect x="${16-s}" y="${16-s}" width="${s*2}" height="${s*2}" fill="${color}" opacity="0.92" transform="rotate(45 16 16)"/>`;
+  } else if (type === 'tea') {
+    const s = size * 0.82;
+    shape = `<rect x="${16-s}" y="${16-s}" width="${s*2}" height="${s*2}" rx="5" fill="${color}" opacity="0.92"/>`;
+  } else {
+    shape = `<circle cx="16" cy="16" r="${size}" fill="${color}" opacity="0.92"/>`;
+  }
+  const dot = isHighlight ? `<circle cx="16" cy="16" r="4" fill="white" opacity="0.75"/>` : '';
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-    ${ring}
-    <circle cx="16" cy="16" r="${size}" fill="${color}" opacity="0.92"/>
-    ${isHighlight ? `<circle cx="16" cy="16" r="5" fill="white" opacity="0.8"/>` : ''}
+    ${ring}${shape}${dot}
   </svg>`;
   return L.divIcon({
     html: svg,
@@ -724,11 +792,14 @@ function buildMarkers() {
   RESTAURANTS.forEach(r => {
     if (markers[r.id]) markers[r.id].remove();
     const color = cuisineColors[r.cuisine] || '#6b8a7a';
-    const marker = L.marker([r.lat, r.lng], { icon: makeIcon(color, r.highlight) });
+    const marker = L.marker([r.lat, r.lng], { icon: makeIcon(color, r.highlight, r.type) });
     const mealBadge = r.meal ? `<span class="popup-highlight">${r.meal}</span>` : '';
+    const yelpLink = r.yelp ? `<a href="${r.yelp}" target="_blank" style="color:#c0612b;font-size:0.72rem;font-weight:500;text-decoration:none;margin-left:8px">Yelp ↗</a>` : '';
     marker.bindPopup(`
       <div>
-        <div class="popup-name"><a href="${r.url}" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px solid #c0612b">${r.name}</a></div>
+        <div class="popup-name">
+          <a href="${r.url}" target="_blank" style="color:inherit;text-decoration:none;border-bottom:1px solid #c0612b">${r.name}</a>${yelpLink}
+        </div>
         <div class="popup-cuisine">${r.cuisineLabel}</div>
         <div class="popup-note">${r.note}</div>
         ${mealBadge}
@@ -741,10 +812,22 @@ function buildMarkers() {
 
 buildMarkers();
 
-// Sidebar list
-function renderList(filter) {
+// Filter state
+let activeCuisine = null;
+let activeType = null;
+
+function applyFilters() {
+  const filtered = RESTAURANTS.filter(r => {
+    const cuisineOk = !activeCuisine || r.cuisine === activeCuisine;
+    const typeOk = !activeType || r.type === activeType;
+    return cuisineOk && typeOk;
+  });
+  const ids = new Set(filtered.map(r => r.id));
+  RESTAURANTS.forEach(r => {
+    if (!markers[r.id]) return;
+    ids.has(r.id) ? markers[r.id].addTo(map) : markers[r.id].remove();
+  });
   const el = document.getElementById('rest-list');
-  const filtered = filter === 'all' ? RESTAURANTS : RESTAURANTS.filter(r => r.cuisine === filter);
   el.innerHTML = filtered.map(r => {
     const color = cuisineColors[r.cuisine] || '#6b8a7a';
     const starBadge = r.highlight ? `<span class="star-badge">★ Pick</span>` : '';
@@ -758,7 +841,7 @@ function renderList(filter) {
   }).join('');
 }
 
-renderList('all');
+applyFilters();
 
 function focusRestaurant(id) {
   const r = RESTAURANTS.find(x => x.id === id);
@@ -767,38 +850,69 @@ function focusRestaurant(id) {
   setTimeout(() => markers[id] && markers[id].openPopup(), 850);
 }
 
-function filterCuisine(type, btn) {
+function filterCuisine(cuisine, btn) {
+  if (cuisine === 'all') {
+    activeCuisine = null;
+  } else {
+    activeCuisine = (activeCuisine === cuisine) ? null : cuisine;
+  }
+  // sync sidebar buttons
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  activeFilter = type;
-  renderList(type);
-  // hide/show markers
-  RESTAURANTS.forEach(r => {
-    if (!markers[r.id]) return;
-    if (type === 'all' || r.cuisine === type) {
-      markers[r.id].addTo(map);
-    } else {
-      markers[r.id].remove();
-    }
+  if (!activeCuisine) document.querySelector('.filter-btn').classList.add('active');
+  else btn.classList.add('active');
+  // sync legend cuisine rows
+  document.querySelectorAll('.legend-cuisine-row').forEach(r => {
+    r.classList.toggle('active', r.dataset.val === activeCuisine);
   });
+  applyFilters();
+}
+
+function legendFilter(dim, val, rowEl) {
+  if (dim === 'type') {
+    activeType = (activeType === val) ? null : val;
+    document.querySelectorAll('.legend-type-row').forEach(r => r.classList.remove('active'));
+    if (activeType) rowEl.classList.add('active');
+  } else {
+    activeCuisine = (activeCuisine === val) ? null : val;
+    document.querySelectorAll('.legend-cuisine-row').forEach(r => r.classList.remove('active'));
+    if (activeCuisine) rowEl.classList.add('active');
+    // sync sidebar buttons
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if (!activeCuisine) document.querySelector('.filter-btn').classList.add('active');
+    else {
+      const match = document.querySelector(`.filter-btn[data-cuisine="${activeCuisine}"]`);
+      if (match) match.classList.add('active');
+    }
+  }
+  applyFilters();
 }
 
 // Legend
 const legend = L.control({ position: 'bottomright' });
 legend.onAdd = () => {
   const div = L.DomUtil.create('div', 'legend');
-  div.innerHTML = `<div class="legend-title">Cuisine</div>` +
-    Object.entries({
-      Japanese: '#5b7fa6',
-      Chinese: '#c04a2a',
-      Thai: '#2d8c5e',
-      Spanish: '#b8831a',
-      Korean: '#8a4fa8',
-      Seafood: '#2c7098',
-      Brazilian: '#3a7a35',
-      Dessert: '#b05080',
-      Other: '#6b8a7a'
-    }).map(([k, v]) => `<div class="legend-row"><div class="legend-dot" style="background:${v}"></div>${k}</div>`).join('');
+  const typeRows = [
+    { val: 'meal',  label: 'Meal',          svg: `<svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#888"/></svg>` },
+    { val: 'snack', label: 'Snack / Dessert',svg: `<svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10" transform="rotate(45 7 7)" fill="#888"/></svg>` },
+    { val: 'tea',   label: 'Café / Tea',     svg: `<svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="2" width="10" height="10" rx="3" fill="#888"/></svg>` },
+  ];
+  const cuisineRows = [
+    { val: 'japanese', label: 'Japanese', color: '#5b7fa6' },
+    { val: 'chinese',  label: 'Chinese',  color: '#c04a2a' },
+    { val: 'thai',     label: 'Thai',     color: '#2d8c5e' },
+    { val: 'spanish',  label: 'Spanish',  color: '#b8831a' },
+    { val: 'korean',   label: 'Korean',   color: '#8a4fa8' },
+    { val: 'seafood',  label: 'Seafood',  color: '#2c7098' },
+    { val: 'dessert',  label: 'Dessert',  color: '#b05080' },
+    { val: 'other',    label: 'Other',    color: '#6b8a7a' },
+  ];
+  div.innerHTML =
+    `<div class="legend-title">Shape · Type</div>` +
+    typeRows.map(r => `<div class="legend-row legend-type-row" data-val="${r.val}" onclick="legendFilter('type','${r.val}',this)">${r.svg} ${r.label}</div>`).join('') +
+    `<div class="legend-title" style="margin-top:9px">Color · Cuisine</div>` +
+    cuisineRows.map(r => `<div class="legend-row legend-cuisine-row" data-val="${r.val}" onclick="legendFilter('cuisine','${r.val}',this)"><div class="legend-dot" style="background:${r.color}"></div> ${r.label}</div>`).join('') +
+    `<div class="legend-title" style="margin-top:9px">Ring · Highlight</div>` +
+    `<div class="legend-row" style="cursor:default"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="6" fill="#c0612b" opacity="0.9"/><circle cx="7" cy="7" r="3" fill="white" opacity="0.75"/></svg> Recommended</div>`;
   return div;
 };
 legend.addTo(map);
