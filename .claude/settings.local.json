@@ -5,7 +5,8 @@
       "WebSearch",
       "WebFetch(domain:arxiv.org)",
       "WebFetch(domain:www.nature.com)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "WebFetch(domain:www.waze.com)"
     ]
   }
 }
